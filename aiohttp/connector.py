@@ -778,6 +778,7 @@ class TCPConnector(BaseConnector):
         timeout_ceil_threshold: float = 5,
         happy_eyeballs_delay: Optional[float] = 0.25,
         interleave: Optional[int] = None,
+        enable_mptcp: bool = False
     ):
         super().__init__(
             keepalive_timeout=keepalive_timeout,
@@ -794,6 +795,7 @@ class TCPConnector(BaseConnector):
                 "got {!r} instead.".format(ssl)
             )
         self._ssl = ssl
+        self._enable_mptcp = enable_mptcp
         if resolver is None:
             resolver = DefaultResolver()
         self._resolver: AbstractResolver = resolver
@@ -1181,8 +1183,9 @@ class TCPConnector(BaseConnector):
             if self._family and self._family != family:
                 continue
             addr = (host, hinfo["port"], 0, 0) if is_ipv6 else (host, hinfo["port"])
+            proto = socket.IPPROTO_MPTCP if self._enable_mptcp else socket.IPPROTO_TCP
             addr_infos.append(
-                (family, socket.SOCK_STREAM, socket.IPPROTO_TCP, "", addr)
+                (family, socket.SOCK_STREAM, proto, "", addr)
             )
         return addr_infos
 

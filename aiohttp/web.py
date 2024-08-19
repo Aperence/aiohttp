@@ -296,6 +296,7 @@ async def _run_app(
     reuse_address: Optional[bool] = None,
     reuse_port: Optional[bool] = None,
     handler_cancellation: bool = False,
+    enable_mptcp: bool = False
 ) -> None:
     # An internal function to actually do all dirty job for application running
     if asyncio.iscoroutine(app):
@@ -330,6 +331,7 @@ async def _run_app(
                         backlog=backlog,
                         reuse_address=reuse_address,
                         reuse_port=reuse_port,
+                        enable_mptcp=enable_mptcp
                     )
                 )
             else:
@@ -343,6 +345,7 @@ async def _run_app(
                             backlog=backlog,
                             reuse_address=reuse_address,
                             reuse_port=reuse_port,
+                            enable_mptcp=enable_mptcp
                         )
                     )
         elif path is None and sock is None or port is not None:
@@ -354,6 +357,7 @@ async def _run_app(
                     backlog=backlog,
                     reuse_address=reuse_address,
                     reuse_port=reuse_port,
+                    enable_mptcp=enable_mptcp
                 )
             )
 
@@ -460,6 +464,7 @@ def run_app(
     reuse_port: Optional[bool] = None,
     handler_cancellation: bool = False,
     loop: Optional[asyncio.AbstractEventLoop] = None,
+    enable_mptcp: bool = False
 ) -> None:
     """Run an app locally"""
     if loop is None:
@@ -492,6 +497,7 @@ def run_app(
             reuse_address=reuse_address,
             reuse_port=reuse_port,
             handler_cancellation=handler_cancellation,
+            enable_mptcp=enable_mptcp
         )
     )
 

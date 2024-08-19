@@ -78,7 +78,7 @@ class BaseSite(ABC):
 
 
 class TCPSite(BaseSite):
-    __slots__ = ("_host", "_port", "_reuse_address", "_reuse_port")
+    __slots__ = ("_host", "_port", "_reuse_address", "_reuse_port", "_enable_mptcp")
 
     def __init__(
         self,
@@ -90,6 +90,7 @@ class TCPSite(BaseSite):
         backlog: int = 128,
         reuse_address: Optional[bool] = None,
         reuse_port: Optional[bool] = None,
+        enable_mptcp: bool = False
     ) -> None:
         super().__init__(
             runner,
@@ -102,6 +103,7 @@ class TCPSite(BaseSite):
         self._port = port
         self._reuse_address = reuse_address
         self._reuse_port = reuse_port
+        self._enable_mptcp = enable_mptcp
 
     @property
     def name(self) -> str:
@@ -114,15 +116,30 @@ class TCPSite(BaseSite):
         loop = asyncio.get_event_loop()
         server = self._runner.server
         assert server is not None
-        self._server = await loop.create_server(
-            server,
-            self._host,
-            self._port,
-            ssl=self._ssl_context,
-            backlog=self._backlog,
-            reuse_address=self._reuse_address,
-            reuse_port=self._reuse_port,
-        )
+        if self._enable_mptcp:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_MPTCP)
+            sock.bind((
+                "0.0.0.0" if self._host is None else self._host,
+                self._port
+            ))
+            self._server = await loop.create_server(
+                server,
+                sock=sock,
+                ssl=self._ssl_context,
+                backlog=self._backlog,
+                reuse_address=self._reuse_address,
+                reuse_port=self._reuse_port,
+            )
+        else:
+            self._server = await loop.create_server(
+                server,
+                self._host,
+                self._port,
+                ssl=self._ssl_context,
+                backlog=self._backlog,
+                reuse_address=self._reuse_address,
+                reuse_port=self._reuse_port,
+            )
 
 
 class UnixSite(BaseSite):
